@@ -82,11 +82,19 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, conve
     transform_list = []
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
+    if 'rot' in opt.preprocess:
+        transform_list.append(transforms.Lambda(lambda img: __slight_rot(img, opt.load_size, method)))
+
     if 'resize' in opt.preprocess:
         osize = [opt.load_size, opt.load_size]
         transform_list.append(transforms.Resize(osize, method))
     elif 'scale_width' in opt.preprocess:
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size, method)))
+    elif 'scale_height' in opt.preprocess:
+        transform_list.append(transforms.Lambda(lambda img: __scale_height(img, opt.load_size, method)))
+
+    if 'rot' in opt.preprocess:
+        transform_list.append(transforms.Lambda(lambda img: __slight_rot(img, opt.load_size, method)))
 
     if 'crop' in opt.preprocess:
         if params is None:
@@ -127,6 +135,14 @@ def __scale_width(img, target_width, method=Image.BICUBIC):
         return img
     w = target_width
     h = int(target_width * oh / ow)
+    return img.resize((w, h), method)
+
+def __scale_height(img, target_height, method=Image.BICUBIC):
+    ow, oh = img.size
+    if (oh == target_height):
+        return img
+    h = target_height
+    w = int(target_height * ow / oh)
     return img.resize((w, h), method)
 
 

@@ -108,13 +108,28 @@ class CycleGANModel(BaseModel):
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
+        if 'A_masks' in input:
+            self.masks_A = input['A_masks' if AtoB else 'B_masks'].to(self.device)
+            self.masks_B = input['B_masks' if AtoB else 'A_masks'].to(self.device)
+        else:
+            self.masks_A = None
+            self.masks_B = None
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG_A(self.real_A)  # G_A(A)
+        if self.masks_A is not None:
+            self.fake_B *= self.masks_A
         self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
+        if self.masks_A is not None:
+            self.fake_B *= self.masks_A
+
         self.fake_A = self.netG_B(self.real_B)  # G_B(B)
+        if self.masks_B is not None:
+            self.fake_A *= self.masks_B
         self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
+        if self.masks_B is not None:
+            self.fake_A *= self.masks_B
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator
@@ -157,10 +172,26 @@ class CycleGANModel(BaseModel):
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
             self.idt_A = self.netG_A(self.real_B)
-            self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
+            if self.idt_A.size(3)>self.real_B.size(3):
+                diff = self.idt_A.size(3)-self.real_B.size(3)
+                self.idt_A = self.idt_A[:,:,:,diff//2:-(diff//2 + diff%2)]
+            if self.idt_A.size(3)<self.real_B.size(3):
+                diff = self.real_B.size(3)-self.idt_A.size(3)
+                real_Bs = self.real_B[:,:,:,diff//2:-(diff//2 + diff%2)]
+            else:
+                real_Bs = self.real_B
+            self.loss_idt_A = self.criterionIdt(self.idt_A, real_Bs) * lambda_B * lambda_idt
             # G_B should be identity if real_A is fed: ||G_B(A) - A||
             self.idt_B = self.netG_B(self.real_A)
-            self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt
+            if self.idt_B.size(3)>self.real_A.size(3):
+                diff = self.idt_B.size(3)-self.real_A.size(3)
+                self.idt_B = self.idt_B[:,:,:,diff//2:-(diff//2 + diff%2)]
+            if self.idt_B.size(3)<self.real_A.size(3):
+                diff = self.real_A.size(3)-self.idt_B.size(3)
+                real_As = self.real_A[:,:,:,diff//2:-(diff//2 + diff%2)]
+            else:
+                real_As = self.real_A
+            self.loss_idt_B = self.criterionIdt(self.idt_B, real_As) * lambda_A * lambda_idt
         else:
             self.loss_idt_A = 0
             self.loss_idt_B = 0
@@ -170,25 +201,50 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
-        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
+        if self.rec_A.size(3)>self.real_A.size(3):
+            diff = self.rec_A.size(3)-self.real_A.size(3)
+            rec_As = self.rec_A[:,:,:,diff//2:-(diff//2 + diff%2)]
+        else:
+            rec_As = self.rec_A
+        if self.rec_A.size(3)<self.real_A.size(3):
+            diff = self.real_A.size(3)-self.rec_A.size(3)
+            real_As = self.real_A[:,:,:,diff//2:-(diff//2 + diff%2)]
+        else:
+            real_As = self.real_A
+        self.loss_cycle_A = self.criterionCycle(rec_As, real_As) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
+        if self.rec_B.size(3)>self.real_B.size(3):
+            diff = self.rec_B.size(3)-self.real_B.size(3)
+            rec_Bs = self.rec_B[:,:,:,diff//2:-(diff//2 + diff%2)]
+        else:
+            rec_Bs = self.rec_B
+        if self.rec_B.size(3)<self.real_B.size(3):
+            diff = self.real_B.size(3)-self.rec_B.size(3)
+            real_Bs = self.real_B[:,:,:,diff//2:-(diff//2 + diff%2)]
+        else:
+            real_Bs = self.real_B
+        self.loss_cycle_B = self.criterionCycle(rec_Bs, real_Bs) * lambda_B
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # forward
-        self.forward()      # compute fake images and reconstruction images.
-        # G_A and G_B
-        self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
-        self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-        self.backward_G()             # calculate gradients for G_A and G_B
-        self.optimizer_G.step()       # update G_A and G_B's weights
-        # D_A and D_B
-        self.set_requires_grad([self.netD_A, self.netD_B], True)
-        self.optimizer_D.zero_grad()   # set D_A and D_B's gradients to zero
-        self.backward_D_A()      # calculate gradients for D_A
-        self.backward_D_B()      # calculate graidents for D_B
-        self.optimizer_D.step()  # update D_A and D_B's weights
+        try:
+            # forward
+            self.forward()      # compute fake images and reconstruction images.
+            # G_A and G_B
+            self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
+            self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
+            self.backward_G()             # calculate gradients for G_A and G_B
+            self.optimizer_G.step()       # update G_A and G_B's weights
+            # D_A and D_B
+            self.set_requires_grad([self.netD_A, self.netD_B], True)
+            self.optimizer_D.zero_grad()   # set D_A and D_B's gradients to zero
+            self.backward_D_A()      # calculate gradients for D_A
+            self.backward_D_B()      # calculate graidents for D_B
+            self.optimizer_D.step()  # update D_A and D_B's weights
+        except RuntimeError as err:
+            print(err)
+            print('sizes A:{}, B:{}'.format(self.real_A.size(),self.real_B.size()))
+            raise err

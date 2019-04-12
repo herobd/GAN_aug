@@ -41,12 +41,13 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
 
         for i, data in enumerate(dataset):  # inner loop within one epoch
+            print('iteration: {}'.format(total_iters), end='\r')
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
             visualizer.reset()
-            total_iters += opt.batch_size
-            epoch_iter += opt.batch_size
+            total_iters += 1#opt.batch_size
+            epoch_iter += 1#opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
@@ -64,7 +65,7 @@ if __name__ == '__main__':
 
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-                save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
+                save_suffix = 'iter_%d' % total_iters if opt.save_by_iter and (total_iters%opt.save_by_iter_at==0) else 'latest'
                 model.save_networks(save_suffix)
 
             iter_data_time = time.time()

@@ -50,7 +50,7 @@ class SyntheticDataset(BaseDataset):
         #self.transform_B = get_transform(self.opt, grayscale=(output_nc == 1))
         self.scale_height = self.opt.scale_height
 
-        self.textGen = SyntheticText('../data/text_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=30,rot=2.5,text_len=40)
+        self.textGen = SyntheticText('../data/text_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=30,rot=2.5,text_len=35)
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.

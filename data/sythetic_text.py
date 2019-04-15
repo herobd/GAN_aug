@@ -179,201 +179,209 @@ class SyntheticText:
         
 
     def getSample(self):
-        np_image,random_text,minX,maxX,minY,maxY,font,ink = self.getRenderedText()
-        if np.random.random()<1.1: #above
-            if  np.random.random()<0.5:
-                fontA=font
-            else:
-                fontA=None
-            np_imageA,random_textA,minXA,maxXA,minYA,maxYA,_,_ = self.getRenderedText(fontA,ink)
-            gap = np.random.normal(self.neighbor_gap_mean,self.neighbor_gap_var)
-            moveA = int(minY-gap)-maxYA
-            mainY1=max(0,minYA+moveA)
-            mainY2=maxYA+moveA
-            AY1=maxYA-(mainY2-mainY1)
-            AY2=maxYA
-            AxOff = np.random.normal(-30,self.neighbor_gap_var*5)
-            mainCenter = (maxX+minX)//2
-            ACenter = (maxXA+minXA)//2
-            AxOff = int((mainCenter-ACenter)+AxOff)
-            mainX1 = max(0,minXA+AxOff)
-            mainX2 = min(np_image.shape[1]-1,maxXA+AxOff)
-            if mainX2>mainX1:
-                AX1 = minXA-(minXA+AxOff-mainX1)
-                AX2 = maxXA-(maxXA+AxOff-mainX2)
-                #print('[{}:{},{}:{}] [{}:{},{}:{}]'.format(mainY1,mainY2+1,mainX1,mainX2+1,AY1,AY2+1,AX1,AX2+1))
-                np_image[mainY1:mainY2+1,mainX1:mainX2+1] = np.maximum(np_image[mainY1:mainY2+1,mainX1:mainX2+1],np_imageA[AY1:AY2+1,AX1:AX2+1])
-        if np.random.random()<1.1: #below
-            if  np.random.random()<0.5:
-                fontA=font
-            else:
-                fontA=None
-            np_imageA,random_textA,minXA,maxXA,minYA,maxYA,_,_ = self.getRenderedText(fontA,ink)
-            gap = np.random.normal(self.neighbor_gap_mean,self.neighbor_gap_var)
-            moveA = int(maxY+gap)-minYA
-            mainY1=minYA+moveA
-            mainY2=min(np_image.shape[0]-1,maxYA+moveA)
-            AY1=minYA
-            AY2=minYA+(mainY2-mainY1)
-            AxOff = np.random.normal(30,self.neighbor_gap_var*5)
-            mainCenter = (maxX+minX)//2
-            ACenter = (maxXA+minXA)//2
-            AxOff = int((mainCenter-ACenter)+AxOff)
-            mainX1 = max(0,minXA+AxOff)
-            mainX2 = min(np_image.shape[1]-1,maxXA+AxOff)
-            if mainX2>mainX1:
-                AX1 = minXA-(minXA+AxOff-mainX1)
-                AX2 = maxXA-(maxXA+AxOff-mainX2)
-                #print('[{}:{},{}:{}] [{}:{},{}:{}]'.format(mainY1,mainY2+1,mainX1,mainX2+1,AY1,AY2+1,AX1,AX2+1))
-                np_image[mainY1:mainY2+1,mainX1:mainX2+1] = np.maximum(np_image[mainY1:mainY2+1,mainX1:mainX2+1],np_imageA[AY1:AY2+1,AX1:AX2+1])
+        while True:
+            np_image,random_text,minX,maxX,minY,maxY,font,ink = self.getRenderedText()
+            if np.random.random()<1.1: #above
+                if  np.random.random()<0.5:
+                    fontA=font
+                else:
+                    fontA=None
+                np_imageA,random_textA,minXA,maxXA,minYA,maxYA,_,_ = self.getRenderedText(fontA,ink)
+                gap = np.random.normal(self.neighbor_gap_mean,self.neighbor_gap_var)
+                moveA = int(minY-gap)-maxYA
+                mainY1=max(0,minYA+moveA)
+                mainY2=maxYA+moveA
+                AY1=maxYA-(mainY2-mainY1)
+                AY2=maxYA
+                AxOff = np.random.normal(-30,self.neighbor_gap_var*5)
+                mainCenter = (maxX+minX)//2
+                ACenter = (maxXA+minXA)//2
+                AxOff = int((mainCenter-ACenter)+AxOff)
+                mainX1 = max(0,minXA+AxOff)
+                mainX2 = min(np_image.shape[1]-1,maxXA+AxOff)
+                if mainX2>mainX1:
+                    AX1 = minXA-(minXA+AxOff-mainX1)
+                    AX2 = maxXA-(maxXA+AxOff-mainX2)
+                    #print('[{}:{},{}:{}] [{}:{},{}:{}]'.format(mainY1,mainY2+1,mainX1,mainX2+1,AY1,AY2+1,AX1,AX2+1))
+                    np_image[mainY1:mainY2+1,mainX1:mainX2+1] = np.maximum(np_image[mainY1:mainY2+1,mainX1:mainX2+1],np_imageA[AY1:AY2+1,AX1:AX2+1])
+            if np.random.random()<1.1: #below
+                if  np.random.random()<0.5:
+                    fontA=font
+                else:
+                    fontA=None
+                np_imageA,random_textA,minXA,maxXA,minYA,maxYA,_,_ = self.getRenderedText(fontA,ink)
+                gap = np.random.normal(self.neighbor_gap_mean,self.neighbor_gap_var)
+                moveA = int(maxY+gap)-minYA
+                mainY1=minYA+moveA
+                mainY2=min(np_image.shape[0]-1,maxYA+moveA)
+                AY1=minYA
+                AY2=minYA+(mainY2-mainY1)
+                AxOff = np.random.normal(30,self.neighbor_gap_var*5)
+                mainCenter = (maxX+minX)//2
+                ACenter = (maxXA+minXA)//2
+                AxOff = int((mainCenter-ACenter)+AxOff)
+                mainX1 = max(0,minXA+AxOff)
+                mainX2 = min(np_image.shape[1]-1,maxXA+AxOff)
+                if mainX2>mainX1:
+                    AX1 = minXA-(minXA+AxOff-mainX1)
+                    AX2 = maxXA-(maxXA+AxOff-mainX2)
+                    #print('[{}:{},{}:{}] [{}:{},{}:{}]'.format(mainY1,mainY2+1,mainX1,mainX2+1,AY1,AY2+1,AX1,AX2+1))
+                    np_image[mainY1:mainY2+1,mainX1:mainX2+1] = np.maximum(np_image[mainY1:mainY2+1,mainX1:mainX2+1],np_imageA[AY1:AY2+1,AX1:AX2+1])
 
 
-        #base_image = pyvips.Image.text(random_text, dpi=300, font=random_font)
-        #org_h = base_image.height
-        #org_w = base_image.width
-        #np_image = np.ndarray(buffer=base_image.write_to_memory(),
-        #        dtype=format_to_dtype[base_image.format],
-        #        shape=[base_image.height, base_image.width, base_image.bands])
+            #base_image = pyvips.Image.text(random_text, dpi=300, font=random_font)
+            #org_h = base_image.height
+            #org_w = base_image.width
+            #np_image = np.ndarray(buffer=base_image.write_to_memory(),
+            #        dtype=format_to_dtype[base_image.format],
+            #        shape=[base_image.height, base_image.width, base_image.bands])
 
 
-        np_image=np_image*0.8
-        padding=np.random.normal(0,self.pad,(2,2))
-        padding[padding<0]*=0.75
-        padding = np.round(padding)#.astype(np.uint8)
+            np_image=np_image*0.8
+            padding=np.random.normal(0,self.pad,(2,2))
+            padding[padding<0]*=0.75
+            padding = np.round(padding)#.astype(np.uint8)
 
-        #lines
-        while np.random.rand() < self.line_prob:
-            side = np.random.choice([1,2,3,4])
-            if side==1: #bot
-                y1 = np.random.normal(maxY+20,self.line_var)
-                y2 = y1+np.random.normal(0,self.line_var/4)
-                x1 = np.random.normal(minX-padding[1,0],self.line_var*2)
-                x2 = np.random.normal(maxX+padding[1,1],self.line_var*2)
-            elif side==2: #top
-                y1 = np.random.normal(minY-20,self.line_var)
-                y2 = y1+np.random.normal(0,self.line_var/4)
-                x1 = np.random.normal(minX-padding[1,0],self.line_var*2)
-                x2 = np.random.normal(maxX+padding[1,1],self.line_var*2)
-            elif side==3: #left
-                x1 = np.random.normal(minX-20,self.line_var)
-                x2 = x1+np.random.normal(0,self.line_var/4)
-                y1 = np.random.normal(minY-padding[0,0],self.line_var*2)
-                y2 = np.random.normal(maxY+padding[0,1],self.line_var*2)
-            elif side==4: #right
-                x1 = np.random.normal(maxX+20,self.line_var)
-                x2 = x1+np.random.normal(0,self.line_var/4)
-                y1 = np.random.normal(minY-padding[0,0],self.line_var*2)
-                y2 = np.random.normal(maxY+padding[0,1],self.line_var*2)
-            thickness = np.random.random()*(self.line_thickness-1) + 1
-            yy,xx,val = weighted_line(y1,x1,y2,x2,thickness,0,np_image.shape[0],0,np_image.shape[1])
-            color = np.random.random()
-            np_image[yy,xx]=np.maximum(val*color,np_image[yy,xx])
-            #print('line {}:  {},{}  {},{}'.format(side,x1,y1,x2,y2))
+            #lines
+            while np.random.rand() < self.line_prob:
+                side = np.random.choice([1,2,3,4])
+                if side==1: #bot
+                    y1 = np.random.normal(maxY+20,self.line_var)
+                    y2 = y1+np.random.normal(0,self.line_var/4)
+                    x1 = np.random.normal(minX-padding[1,0],self.line_var*2)
+                    x2 = np.random.normal(maxX+padding[1,1],self.line_var*2)
+                elif side==2: #top
+                    y1 = np.random.normal(minY-20,self.line_var)
+                    y2 = y1+np.random.normal(0,self.line_var/4)
+                    x1 = np.random.normal(minX-padding[1,0],self.line_var*2)
+                    x2 = np.random.normal(maxX+padding[1,1],self.line_var*2)
+                elif side==3: #left
+                    x1 = np.random.normal(minX-20,self.line_var)
+                    x2 = x1+np.random.normal(0,self.line_var/4)
+                    y1 = np.random.normal(minY-padding[0,0],self.line_var*2)
+                    y2 = np.random.normal(maxY+padding[0,1],self.line_var*2)
+                elif side==4: #right
+                    x1 = np.random.normal(maxX+20,self.line_var)
+                    x2 = x1+np.random.normal(0,self.line_var/4)
+                    y1 = np.random.normal(minY-padding[0,0],self.line_var*2)
+                    y2 = np.random.normal(maxY+padding[0,1],self.line_var*2)
+                thickness = np.random.random()*(self.line_thickness-1) + 1
+                yy,xx,val = weighted_line(y1,x1,y2,x2,thickness,0,np_image.shape[0],0,np_image.shape[1])
+                color = np.random.random()
+                np_image[yy,xx]=np.maximum(val*color,np_image[yy,xx])
+                #print('line {}:  {},{}  {},{}'.format(side,x1,y1,x2,y2))
 
-        #crop region
-        #np_image = np.pad(np_image,padding,mode='constant')*0.8
-        minY = max(0,minY-padding[0,0])
-        minX = max(0,minX-padding[1,0])
-        maxY = maxY+1+padding[0,1]
-        maxX = maxX+1+padding[1,1]
+            #crop region
+            #np_image = np.pad(np_image,padding,mode='constant')*0.8
+            minY = max(0,minY-padding[0,0])
+            minX = max(0,minX-padding[1,0])
+            maxY = maxY+1+padding[0,1]
+            maxX = maxX+1+padding[1,1]
 
-        #rot
-        #xc=(maxX+minX)//2
-        #yc=(maxY+minY)//2
-        ##actually center the image on xc,yc
-        #removeLeft = xc-min(xc,np_image.shape[1]-xc)
-        #removeRight = (np_image.shape[1]-xc)-min(xc,np_image.shape[1]-xc)
-        #removeTop = yc-min(yc,np_image.shape[0]-yc)
-        #removeBot = (np_image.shape[0]-yc)-min(yc,np_image.shape[0]-yc)
-        #np_image = np_image[removeTop:-removeBot,removeLeft:-removeRight]
-        #minY -= removeTop
-        #maxY -= removeTop+removeBot
-        #minX -= removeLeft
-        #maxX -= removeLeft+removeRight
-        degrees=np.random.normal(0,self.rot)
-        degrees = max(-2.5*self.rot,degrees)
-        degrees = min(2.5*self.rot,degrees)
-        np_image = rotate(np_image,degrees,reshape=False)
+            #rot
+            #xc=(maxX+minX)//2
+            #yc=(maxY+minY)//2
+            ##actually center the image on xc,yc
+            #removeLeft = xc-min(xc,np_image.shape[1]-xc)
+            #removeRight = (np_image.shape[1]-xc)-min(xc,np_image.shape[1]-xc)
+            #removeTop = yc-min(yc,np_image.shape[0]-yc)
+            #removeBot = (np_image.shape[0]-yc)-min(yc,np_image.shape[0]-yc)
+            #np_image = np_image[removeTop:-removeBot,removeLeft:-removeRight]
+            #minY -= removeTop
+            #maxY -= removeTop+removeBot
+            #minX -= removeLeft
+            #maxX -= removeLeft+removeRight
+            degrees=np.random.normal(0,self.rot)
+            degrees = max(-2.5*self.rot,degrees)
+            degrees = min(2.5*self.rot,degrees)
+            np_image = rotate(np_image,degrees,reshape=False)
 
-        
-        theta = math.pi*degrees/180
-        xc=np_image.shape[1]/2
-        yc=np_image.shape[0]/2
-        tlX,tlY = rot_point(minX,minY,xc,yc,theta)
-        trX,trY = rot_point(maxX,minY,xc,yc,theta)
-        blX,blY = rot_point(minX,maxY,xc,yc,theta)
-        brX,brY = rot_point(maxX,maxY,xc,yc,theta)
-        #w=(maxX-minX)/2
-        #h=(maxY-minY)/2
-        #xc=(maxX+minX)/2
-        #yc=(maxY+minY)/2
-        #tlX =-w*math.cos(theta) - h*math.sin(theta) + xc
-        #trX = w*math.cos(theta) - h*math.sin(theta) + xc
-        #brX = w*math.cos(theta) + h*math.sin(theta) + xc
-        #blX =-w*math.cos(theta) + h*math.sin(theta) + xc
-        #tlY =-w*math.sin(theta) + h*math.cos(theta) + yc
-        #trY = w*math.sin(theta) + h*math.cos(theta) + yc
-        #brY = w*math.sin(theta) - h*math.cos(theta) + yc
-        #blY =-w*math.sin(theta) - h*math.cos(theta) + yc
+            
+            theta = math.pi*degrees/180
+            xc=np_image.shape[1]/2
+            yc=np_image.shape[0]/2
+            tlX,tlY = rot_point(minX,minY,xc,yc,theta)
+            trX,trY = rot_point(maxX,minY,xc,yc,theta)
+            blX,blY = rot_point(minX,maxY,xc,yc,theta)
+            brX,brY = rot_point(maxX,maxY,xc,yc,theta)
+            #w=(maxX-minX)/2
+            #h=(maxY-minY)/2
+            #xc=(maxX+minX)/2
+            #yc=(maxY+minY)/2
+            #tlX =-w*math.cos(theta) - h*math.sin(theta) + xc
+            #trX = w*math.cos(theta) - h*math.sin(theta) + xc
+            #brX = w*math.cos(theta) + h*math.sin(theta) + xc
+            #blX =-w*math.cos(theta) + h*math.sin(theta) + xc
+            #tlY =-w*math.sin(theta) + h*math.cos(theta) + yc
+            #trY = w*math.sin(theta) + h*math.cos(theta) + yc
+            #brY = w*math.sin(theta) - h*math.cos(theta) + yc
+            #blY =-w*math.sin(theta) - h*math.cos(theta) + yc
 
-        minY = int(round(max(min(tlY,trY,blY,brY),0)))
-        maxY = int(round(min(max(tlY,trY,blY,brY),np_image.shape[0])))
-        minX = int(round(max(min(tlX,trX,blX,brX),0)))
-        maxX = int(round(min(max(tlX,trX,blX,brX),np_image.shape[1])))
-        
+            minY = int(round(max(min(tlY,trY,blY,brY),0)))
+            maxY = int(round(min(max(tlY,trY,blY,brY),np_image.shape[0])))
+            minX = int(round(max(min(tlX,trX,blX,brX),0)))
+            maxX = int(round(min(max(tlX,trX,blX,brX),np_image.shape[1])))
+            
 
-        #yy,xx,val = weighted_line(minY,minX,minY,maxX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
-        #yy,xx,val = weighted_line(minY,maxX,maxY,maxX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
-        #yy,xx,val = weighted_line(maxY,maxX,maxY,minX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
-        #yy,xx,val = weighted_line(maxY,minX,minY,minX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(minY,minX,minY,maxX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(minY,maxX,maxY,maxX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(maxY,maxX,maxY,minX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(maxY,minX,minY,minX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
 
-        #yy,xx,val = weighted_line(tlY,tlX,trY,trX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
-        #yy,xx,val = weighted_line(trY,trX,brY,brX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
-        #yy,xx,val = weighted_line(brY,brX,blY,blX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
-        #yy,xx,val = weighted_line(blY,blX,tlY,tlX,20,0,np_image.shape[0],0,np_image.shape[1])
-        #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(tlY,tlX,trY,trX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(trY,trX,brY,brX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(brY,brX,blY,blX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
+            #yy,xx,val = weighted_line(blY,blX,tlY,tlX,20,0,np_image.shape[0],0,np_image.shape[1])
+            #np_image[yy,xx]=val
 
-        np_image = np_image[minY:maxY,minX:maxX]
 
-        #holes
-        while np.random.rand() < self.hole_prob:
-            x=np.random.randint(0,np_image.shape[1])
-            y=np.random.randint(0,np_image.shape[0])
-            rad = np.random.randint(1,self.hole_size)
-            rad2 = np.random.randint(rad/3,rad)
-            size = rad*rad2
-            rot = np.random.random()*2*np.pi
-            strength = (1.6*np.random.random()-1.0)*(1-size/(self.hole_size*self.hole_size))
-            yy,xx = skimage.draw.ellipse(y, x, rad, rad2, shape=np_image.shape, rotation=rot)
-            complete = np.random.random()
-            app = np.maximum(1-np.abs(np.random.normal(0,1-complete,yy.shape)),0)
-            np_image[yy,xx] = np.maximum(np.minimum(np_image[yy,xx]+strength*app,1),0)
+            np_image = np_image[minY:maxY,minX:maxX]
 
-        #noise
-        #specle noise
-        #gaus_n = 0.2+(self.gaus-0.2)*np.random.random()
-        gaus_n = abs(np.random.normal(self.gaus,0.1))
-        if gaus_n==0:
-            gaus_n=0.0001
-        
-        np_image += np.random.normal(0,gaus_n,np_image.shape)
-        #blur
-        blur_s = np.random.normal(self.blur_size,0.2)
-        np_image = gaussian_filter(np_image,blur_s)
+            if np_image.shape[1]==0 or np_image.shape[0]==0:
+                continue
 
-        minV = np_image.min()
-        maxV = np_image.max()
-        np_image = (np_image-minV)/(maxV-minV)
+            #holes
+            while np.random.rand() < self.hole_prob:
+                x=np.random.randint(0,np_image.shape[1])
+                y=np.random.randint(0,np_image.shape[0])
+                rad = np.random.randint(1,self.hole_size)
+                rad2 = np.random.randint(rad/3,rad)
+                size = rad*rad2
+                rot = np.random.random()*2*np.pi
+                strength = (1.6*np.random.random()-1.0)*(1-size/(self.hole_size*self.hole_size))
+                yy,xx = skimage.draw.ellipse(y, x, rad, rad2, shape=np_image.shape, rotation=rot)
+                complete = np.random.random()
+                app = np.maximum(1-np.abs(np.random.normal(0,1-complete,yy.shape)),0)
+                np_image[yy,xx] = np.maximum(np.minimum(np_image[yy,xx]+strength*app,1),0)
 
-        #contrast/brighness
-        cv_image = (255*np_image)[:,:,None].astype(np.uint8)
-        np_image = apply_tensmeyer_brightness(cv_image,20)[:,:,0]/255.0
+            #noise
+            #specle noise
+            #gaus_n = 0.2+(self.gaus-0.2)*np.random.random()
+            gaus_n = abs(np.random.normal(self.gaus,0.1))
+            if gaus_n==0:
+                gaus_n=0.0001
+            
+            np_image += np.random.normal(0,gaus_n,np_image.shape)
+            #blur
+            blur_s = np.random.normal(self.blur_size,0.2)
+            np_image = gaussian_filter(np_image,blur_s)
+
+            minV = np_image.min()
+            maxV = np_image.max()
+            np_image = (np_image-minV)/(maxV-minV)
+
+            #contrast/brighness
+            cv_image = (255*np_image)[:,:,None].astype(np.uint8)
+            np_image = apply_tensmeyer_brightness(cv_image,20)[:,:,0]/255.0
+
+            if np_image.shape[0]>0 and np_image.shape[1]>1:
+                break
 
         return np_image, random_text

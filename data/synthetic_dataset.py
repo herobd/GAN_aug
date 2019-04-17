@@ -50,7 +50,11 @@ class SyntheticDataset(BaseDataset):
         #self.transform_B = get_transform(self.opt, grayscale=(output_nc == 1))
         self.scale_height = self.opt.scale_height
 
-        self.textGen = SyntheticText('../data/text_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=30,rot=2.5,text_len=35)
+        self.textGen = [SyntheticText('../data/fonts/text_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=35, use_warp=0.4,warp_std=[1,1.4])]
+        
+        if not opt.text_only:
+            self.textGen.append(SyntheticText('../data/fonts/handwritten_fonts','../data/OANC_text',line_prob=0.85,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=35, use_warp=0.6,warp_std=[1,2]))
+            
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -66,7 +70,8 @@ class SyntheticDataset(BaseDataset):
         """
         A_path = self.A_paths[index % self.A_size]  # make sure index is within then range
         A_img = cv2.imread(A_path,0) #Image.open(A_path).convert('RGB')
-        B_img,text = self.textGen.getSample()
+        gen = random.choice(self.textGen)
+        B_img,text = gen.getSample()
         if B_img.shape[1]/B_img.shape[0]<0.85 or A_img is None or A_img.shape[1]/A_img.shape[0]<0.85:
             return self[(index+100)%len(self)]
         # apply image transformation

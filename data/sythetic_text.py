@@ -160,13 +160,18 @@ class SyntheticText:
                 font = self.getFont()
 
             #create big canvas as it's hard to predict how large font will render
-            size=(250+150*len(random_text),920)
+            size=(250+190*len(random_text),920)
             image = Image.new(mode='L', size=size)
 
             draw = ImageDraw.Draw(image)
             if ink is None:
                 ink=(np.random.random()/2)+0.5
-            draw.text((400, 250), random_text, font=font,fill=1)
+            try:
+                draw.text((400, 250), random_text, font=font,fill=1)
+            except OSError:
+                font=None
+                ink=None
+                continue
             np_image = np.array(image)
 
             horzP = np.max(np_image,axis=0)
@@ -183,7 +188,7 @@ class SyntheticText:
             if i>50:
                 font=None
                 ink=None
-        return np.zeros(20,20)
+        return np.zeros((20,20))
         
 
     def getSample(self):
@@ -388,15 +393,15 @@ class SyntheticText:
 
             #contrast/brighness
             cv_image = (255*np_image).astype(np.uint8)
-            np_image = apply_tensmeyer_brightness(cv_image,25)
+            cv_image = apply_tensmeyer_brightness(cv_image,25)
             #warp aug
             if random.random() < self.use_warp:
                 if type(self.warp_std) is list:
                     std = (self.warp_std[1]-self.warp_std[0])*np.random.random()+self.warp_std[0]
                 else:
                     std=self.warp_std
-                np_image = grid_distortion.warp_image(np_image,std=std)
-            np_image =np_image/255.0
+                cv_image = grid_distortion.warp_image(cv_image,std=std)
+            np_image =cv_image/255.0
 
             if np_image.shape[0]>0 and np_image.shape[1]>1:
                 break

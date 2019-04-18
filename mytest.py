@@ -1,7 +1,7 @@
 from data.sythetic_text import SyntheticText
 import cv2
 
-st = SyntheticText('../data/fonts/handwritten_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=40,use_warp=0.6,warp_std=[1,2])
+st = SyntheticText('../data/fonts/handwritten_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=40,use_warp=0.7,warp_std=[1,4], warp_intr=[12,100])
 
 for i in range(30):
     image,text= st.getSample()

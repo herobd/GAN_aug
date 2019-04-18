@@ -107,7 +107,7 @@ def apply_tensmeyer_brightness(img, sigma=20, **kwargs):
 
 class SyntheticText:
 
-    def __init__(self,font_dir,text_dir,text_len=20,pad=20,line_prob=0.1,line_thickness=3,line_var=20,rot=10, gaus_noise=0.1, blur_size=1, hole_prob=0.2,hole_size=100,neighbor_gap_mean=20,neighbor_gap_var=7,use_warp=0.5,warp_std=1.5):
+    def __init__(self,font_dir,text_dir,text_len=20,pad=20,line_prob=0.1,line_thickness=3,line_var=20,rot=10, gaus_noise=0.1, blur_size=1, hole_prob=0.2,hole_size=100,neighbor_gap_mean=20,neighbor_gap_var=7,use_warp=0.5,warp_std=1.5, warp_intr=12):
         self.font_dir = font_dir
         with open(os.path.join(font_dir,'fonts.list')) as f:
             self.fonts = f.read().splitlines()
@@ -128,6 +128,7 @@ class SyntheticText:
         self.neighbor_gap_var=neighbor_gap_var
         self.use_warp=use_warp
         self.warp_std=warp_std
+        self.warp_intr=warp_intr
 
 
     def getText(self):
@@ -380,7 +381,7 @@ class SyntheticText:
             #gaus_n = 0.2+(self.gaus-0.2)*np.random.random()
             gaus_n = abs(np.random.normal(self.gaus,0.1))
             if gaus_n==0:
-                gaus_n=0.0001
+                gaus_n=0.00001
             
             np_image += np.random.normal(0,gaus_n,np_image.shape)
             #blur
@@ -396,11 +397,16 @@ class SyntheticText:
             cv_image = apply_tensmeyer_brightness(cv_image,25)
             #warp aug
             if random.random() < self.use_warp:
+                if type(self.warp_intr) is list:
+                    intr = np.random.randint(self.warp_intr[0],self.warp_intr[1])
+                else:
+                    intr=self.warp_intr
                 if type(self.warp_std) is list:
                     std = (self.warp_std[1]-self.warp_std[0])*np.random.random()+self.warp_std[0]
                 else:
                     std=self.warp_std
-                cv_image = grid_distortion.warp_image(cv_image,std=std)
+                std *= intr/12
+                cv_image = grid_distortion.warp_image(cv_image,w_mesh_std=std,h_mesh_std=std,w_mesh_interval=intr,h_mesh_interval=intr)
             np_image =cv_image/255.0
 
             if np_image.shape[0]>0 and np_image.shape[1]>1:

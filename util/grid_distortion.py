@@ -8,15 +8,15 @@ INTERPOLATION = {
     "cubic": cv2.INTER_CUBIC
 }
 
-def warp_image(img, random_state=None,std=1.5, **kwargs):
+def warp_image(img, random_state=None, **kwargs):
     if random_state is None:
         random_state = np.random.RandomState()
 
     w_mesh_interval = kwargs.get('w_mesh_interval', 12)
-    w_mesh_std = kwargs.get('w_mesh_std', std)
+    w_mesh_std = kwargs.get('w_mesh_std', 1.5)
 
     h_mesh_interval = kwargs.get('h_mesh_interval', 12)
-    h_mesh_std = kwargs.get('h_mesh_std', std)
+    h_mesh_std = kwargs.get('h_mesh_std', 1.5)
 
     interpolation_method = kwargs.get('interpolation', 'linear')
 
@@ -58,7 +58,10 @@ def warp_image(img, random_state=None,std=1.5, **kwargs):
     grid_z = griddata(destination, source, (grid_x, grid_y), method=interpolation_method).astype(np.float32)
     map_x = grid_z[:,:,1]
     map_y = grid_z[:,:,0]
-    warped = cv2.remap(img, map_x, map_y, INTERPOLATION[interpolation_method], borderValue=(255,255,255))
+    borderV = img.mean(axis=(0,1))
+    if len(borderV.shape)>0:
+        borderV = tuple(borderV.tolist())
+    warped = cv2.remap(img, map_x, map_y, INTERPOLATION[interpolation_method], borderValue=borderV)
 
     return warped
 

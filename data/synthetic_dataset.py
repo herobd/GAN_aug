@@ -3,9 +3,10 @@ from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 from data.sythetic_text import SyntheticText, apply_tensmeyer_brightness
 #from PIL import Image
-import cv2
+import cv2, json
 import random
 import torch
+from util import grid_distortion
 
 
 class SyntheticDataset(BaseDataset):
@@ -50,11 +51,36 @@ class SyntheticDataset(BaseDataset):
         #self.transform_A = get_transform(self.opt, grayscale=(input_nc == 1))
         #self.transform_B = get_transform(self.opt, grayscale=(output_nc == 1))
         self.scale_height = self.opt.scale_height
-
-        self.textGen = [SyntheticText('../data/fonts/text_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=35, use_warp=0.4,warp_std=[1,1.4])]
         
-        if not opt.text_only:
-            self.textGen.append(SyntheticText('../data/fonts/handwritten_fonts','../data/OANC_text',line_prob=0.85,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=35, use_warp=0.6,warp_std=[1,2]))
+        if opt.syn_file is None:
+            self.use_warp=-1
+            self.textGen = [SyntheticText('../data/fonts/text_fonts','../data/OANC_text',line_prob=0.8,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=35, use_warp=0.4,warp_std=[1,1.4])]
+            
+            if not opt.text_only:
+                self.textGen.append(SyntheticText('../data/fonts/handwritten_fonts','../data/OANC_text',line_prob=0.85,line_thickness=70,line_var=30,pad=20,gaus_noise=0.15,hole_prob=0.6, hole_size=400,neighbor_gap_var=25,rot=2.5,text_len=35, use_warp=0.6,warp_std=[1,2]))
+        else:
+            with open(opt.syn_file) as f:
+                syn_params = json.load(f)
+            self.textGen=[]
+            for gen in syn_params:
+                self.textGen.append(SyntheticText(
+                    gen['font_dir'],
+                    gen['text_dir'],
+                    line_prob=gen['line_prob'],
+                    line_thickness=gen['line_thickness'],
+                    line_var=gen['line_var'],
+                    pad=gen['pad'],
+                    gaus_noise=gen['gaus_noise'],
+                    hole_prob=gen['hole_prob'],
+                    hole_size=gen['hole_size'],
+                    neighbor_gap_var=gen['neighbor_gap_var'],
+                    rot=gen['rot'],
+                    text_len=gen['text_len'],
+                    use_warp=gen['use_warp'],
+                    warp_std=gen['warp_std'],
+                    warp_intr=gen['warp_intr']
+                    ))
+            self.use_warp = gen['use_warp']
             
 
     def __getitem__(self, index):
@@ -93,7 +119,10 @@ class SyntheticDataset(BaseDataset):
         #cv2.imwrite('test/A{}.png'.format(index),A_img)
         #cv2.imwrite('test/B{}.png'.format(index),255*B_img)
         A_img = 1-(A_img/128.0)
-        B_img = 1-2.0*B_img
+        B_img = 2.0*B_img-1.0
+        if self.augment:
+            if random.random() < self.use_warp:
+                A_img = grid_distortion.warp_image(A_img) #use default params of start-follow-read
 
         A = torch.from_numpy(A_img)[None,...].float()
         B = torch.from_numpy(B_img)[None,...].float()

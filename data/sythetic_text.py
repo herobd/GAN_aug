@@ -9,6 +9,7 @@ import string
 import random
 import os
 import math
+from util import grid_distortion
 
 #import pyvips
 
@@ -75,13 +76,15 @@ def rot_point(x,y,xc,yc,theta):
     return x_n+xc,y_n+yc
 
 def tensmeyer_brightness(img, foreground=0, background=0):
-    if img.shape[2]==3:
+    if len(img.shape)>2 and img.shape[2]==3:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     else:
         gray = img
     ret,th = cv2.threshold(gray ,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-    th = (th.astype(np.float32) / 255)[...,None]
+    th = (th.astype(np.float32) / 255)
+    if len(img.shape)>2:
+        th = th[...,None]
 
     img = img.astype(np.float32)
     img = img + (1.0 - th) * foreground
@@ -104,7 +107,7 @@ def apply_tensmeyer_brightness(img, sigma=20, **kwargs):
 
 class SyntheticText:
 
-    def __init__(self,font_dir,text_dir,text_len=20,pad=20,line_prob=0.1,line_thickness=3,line_var=20,rot=10, gaus_noise=0.1, blur_size=1, hole_prob=0.2,hole_size=100,neighbor_gap_mean=20,neighbor_gap_var=7):
+    def __init__(self,font_dir,text_dir,text_len=20,pad=20,line_prob=0.1,line_thickness=3,line_var=20,rot=10, gaus_noise=0.1, blur_size=1, hole_prob=0.2,hole_size=100,neighbor_gap_mean=20,neighbor_gap_var=7,use_warp=0.5,warp_std=1.5, warp_intr=12):
         self.font_dir = font_dir
         with open(os.path.join(font_dir,'fonts.list')) as f:
             self.fonts = f.read().splitlines()
@@ -123,6 +126,10 @@ class SyntheticText:
         self.hole_size=hole_size
         self.neighbor_gap_mean=neighbor_gap_mean
         self.neighbor_gap_var=neighbor_gap_var
+        self.use_warp=use_warp
+        self.warp_std=warp_std
+        self.warp_intr=warp_intr
+
 
     def getText(self):
         #l = np.random.randint(1,20)
@@ -160,7 +167,12 @@ class SyntheticText:
             draw = ImageDraw.Draw(image)
             if ink is None:
                 ink=(np.random.random()/2)+0.5
-            draw.text((400, 250), random_text, font=font,fill=1)
+            try:
+                draw.text((400, 250), random_text, font=font,fill=1)
+            except OSError:
+                font=None
+                ink=None
+                continue
             np_image = np.array(image)
 
             horzP = np.max(np_image,axis=0)
@@ -169,13 +181,15 @@ class SyntheticText:
             vertP = np.max(np_image,axis=1)
             minY=first_nonzero(vertP,0)
             maxY=last_nonzero(vertP,0)
+
+
             if (minX<maxX and minY<maxY):
                 return np_image,random_text,minX,maxX,minY,maxY,font,ink
 
             if i>50:
                 font=None
                 ink=None
-        return np.zeros(20,20)
+        return np.zeros((20,20))
         
 
     def getSample(self):
@@ -361,12 +375,13 @@ class SyntheticText:
                 app = np.maximum(1-np.abs(np.random.normal(0,1-complete,yy.shape)),0)
                 np_image[yy,xx] = np.maximum(np.minimum(np_image[yy,xx]+strength*app,1),0)
 
+
             #noise
             #specle noise
             #gaus_n = 0.2+(self.gaus-0.2)*np.random.random()
             gaus_n = abs(np.random.normal(self.gaus,0.1))
             if gaus_n==0:
-                gaus_n=0.0001
+                gaus_n=0.00001
             
             np_image += np.random.normal(0,gaus_n,np_image.shape)
             #blur
@@ -378,10 +393,29 @@ class SyntheticText:
             np_image = (np_image-minV)/(maxV-minV)
 
             #contrast/brighness
-            cv_image = (255*np_image)[:,:,None].astype(np.uint8)
-            np_image = apply_tensmeyer_brightness(cv_image,20)[:,:,0]/255.0
+            cv_image = (255*np_image).astype(np.uint8)
+            cv_image = apply_tensmeyer_brightness(cv_image,25)
+            #warp aug
+            if random.random() < self.use_warp:
+                if type(self.warp_intr) is list:
+                    intr = np.random.randint(self.warp_intr[0],self.warp_intr[1])
+                else:
+                    intr=self.warp_intr
+                if type(self.warp_std) is list:
+                    std = (self.warp_std[1]-self.warp_std[0])*np.random.random()+self.warp_std[0]
+                else:
+                    std=self.warp_std
+                std *= intr/12
+                cv_image = grid_distortion.warp_image(cv_image,w_mesh_std=std,h_mesh_std=std,w_mesh_interval=intr,h_mesh_interval=intr)
+            np_image =cv_image/255.0
 
             if np_image.shape[0]>0 and np_image.shape[1]>1:
                 break
+
+            #random pad
+            #if random.random()>0.5:
+            #    w = random.randint(0,np_img.shape[0])
+            #    if random.random()>0.5:
+            #        pad = 
 
         return np_image, random_text

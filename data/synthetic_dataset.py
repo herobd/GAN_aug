@@ -25,6 +25,7 @@ class SyntheticDataset(BaseDataset):
         parser.set_defaults(input_nc=1)
         parser.set_defaults(output_nc=1)
         parser.add_argument('--scale_height', type=int, default=32, help='scale images to this height')
+        parser.add_argument('--max_total_width', type=int, default=-1, help='random crop images if their summed width exceed this')
         parser.add_argument('--text_only', type=bool, default=False, help='only use text images')
         return parser
 
@@ -51,6 +52,7 @@ class SyntheticDataset(BaseDataset):
         #self.transform_A = get_transform(self.opt, grayscale=(input_nc == 1))
         #self.transform_B = get_transform(self.opt, grayscale=(output_nc == 1))
         self.scale_height = self.opt.scale_height
+        self.max_total_width = opt.max_total_width
         
         if opt.syn_file is None:
             self.use_warp=-1
@@ -123,6 +125,18 @@ class SyntheticDataset(BaseDataset):
         if self.augment:
             if random.random() < self.use_warp:
                 A_img = grid_distortion.warp_image(A_img) #use default params of start-follow-read
+
+        if self.max_total_width>0 and A_img.shape[1]+B_img.shape[1]>self.max_total_width:
+            excess = (A_img.shape[1]+B_img.shape[1])-self.max_total_width
+            #if A_img.shape[1]-excess >= B_img.shape[1]:
+            #    startX = random.randint(0,excess)
+            #    A_img = A_img[:,startX:startX+self.max_width]
+            #elif
+            startX = random.randint(0,excess)
+            if A_img.shape[1]>B_img.shape[1]:
+                A_img = A_img[:,startX:startX+A_img.shape[1]-excess]
+            else:
+                B_img = B_img[:,startX:startX+B_img.shape[1]-excess]
 
         A = torch.from_numpy(A_img)[None,...].float()
         B = torch.from_numpy(B_img)[None,...].float()

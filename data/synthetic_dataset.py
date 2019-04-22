@@ -1,12 +1,12 @@
 import os.path
 from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
-from data.sythetic_text import SyntheticText, apply_tensmeyer_brightness
+from synthetic_text_gen import SyntheticText, apply_tensmeyer_brightness, grid_distortion
 #from PIL import Image
 import cv2, json
 import random
 import torch
-from util import grid_distortion
+#from util import grid_distortion
 
 
 class SyntheticDataset(BaseDataset):

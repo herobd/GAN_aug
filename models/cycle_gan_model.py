@@ -151,17 +151,19 @@ class CycleGANModel(BaseModel):
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5
         loss_D.backward()
-        return loss_D
+        return loss_D, pred_real.mean().item(), pred_fake.mean().item()
 
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
+        self.loss_D_A, real_score,fake_score = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
+        self.score_A=real_score
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
+        self.loss_D_B, real_score,fake_score = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
+        self.score_B=real_score
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -199,7 +201,9 @@ class CycleGANModel(BaseModel):
         # GAN loss D_A(G_A(A))
         self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
         # GAN loss D_B(G_B(B))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
+        score = self.netD_B(self.fake_A)
+        self.loss_G_B = self.criterionGAN(score, True)
+        self.score_fake=score.mean().item()
         # Forward cycle loss || G_B(G_A(A)) - A||
         if self.rec_A.size(3)>self.real_A.size(3):
             diff = self.rec_A.size(3)-self.real_A.size(3)
@@ -248,3 +252,4 @@ class CycleGANModel(BaseModel):
             print(err)
             print('sizes A:{}, B:{}'.format(self.real_A.size(),self.real_B.size()))
             raise err
+

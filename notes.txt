@@ -7,4 +7,4 @@ python train.py --dataroot ../data/formsboxesbigger/ --name syn_text_cyclegan --
 
 python train.py --dataroot ../data/bentham/line_images/ --name syn_bentham_cyclegan --model cycle_gan --dataset_mode synthetic --scale_height 32 --netG resnet_6blocks --display_id 0 --update_html_freq 200 --save_latest_freq 500  --save_by_iter --save_by_iter_at 10000 --lambda_identity 0.1 --syn_file synth_hw.json --num_threads 5 --display_freq 100
 
-python train.py --dataroot ../data/bentham/line_images/ --name syn_bentham60_cyclegan --model cycle_gan --dataset_mode synthetic --scale_height 60 --netG resnet_6blocks --display_id 0 --update_html_freq 200 --save_latest_freq 500  --save_by_iter --save_by_iter_at 10000 --lambda_identity 0.1 --syn_file synth_hw.json --num_threads 5 --display_freq 100
+python train.py --dataroot ../data/bentham/line_images/ --name syn_bentham60W_cyclegan --model cycle_gan --dataset_mode synthetic --scale_height 60 --netG resnet_6blocks --display_id 0 --update_html_freq 200 --save_latest_freq 500  --save_by_iter --save_by_iter_at 10000 --lambda_identity 0.1 --syn_file synth_hw.json --num_threads 5 --display_freq 100

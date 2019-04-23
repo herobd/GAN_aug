@@ -85,8 +85,11 @@ class BaseModel(ABC):
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
         if not self.isTrain or opt.continue_train:
             load_suffix = 'iter_%d' % opt.load_iter if opt.load_iter > 0 else opt.epoch
-            self.load_networks(load_suffix)
+            aux = self.load_networks(load_suffix)
+        else:
+            aux = None
         self.print_networks(opt.verbose)
+        return aux
 
     def eval(self):
         """Make models eval mode during test time"""
@@ -140,7 +143,7 @@ class BaseModel(ABC):
                 errors_ret[name] = float(getattr(self, 'loss_' + name))  # float(...) works for both scalar tensor and float number
         return errors_ret
 
-    def save_networks(self, epoch):
+    def save_networks(self, epoch, aux):
         """Save all the networks to the disk.
 
         Parameters:
@@ -157,6 +160,9 @@ class BaseModel(ABC):
                     net.cuda(self.gpu_ids[0])
                 else:
                     torch.save(net.cpu().state_dict(), save_path)
+        save_filename = '%s_aux.pth' % (epoch)
+        save_path = os.path.join(self.save_dir, save_filename)
+        torch.save(aux,save_path)
 
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         """Fix InstanceNorm checkpoints incompatibility (prior to 0.4)"""
@@ -196,6 +202,12 @@ class BaseModel(ABC):
                 for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
+        load_filename = '%s_aux.pth' % (epoch)
+        load_path = os.path.join(self.save_dir, load_filename)
+        if os.path.exists(load_path):
+            return torch.load(load_path)
+        else:
+            return None
 
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture
@@ -227,3 +239,14 @@ class BaseModel(ABC):
             if net is not None:
                 for param in net.parameters():
                     param.requires_grad = requires_grad
+
+    def get_optimizer_states(self):
+        return [o.state_dict() for o in self.optimizers]
+    def set_optimizer_states(self,states):
+        for i,s in enumerate(states):
+            self.optimizers[i].load_state_dict(s)
+    def get_scheduler_states(self):
+        return [o.state_dict() for o in self.schedulers]
+    def set_scheduler_states(self,states):
+        for i,s in enumerate(states):
+            self.schedulers[i].load_state_dict(s)

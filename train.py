@@ -23,6 +23,7 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
+import numpy as np
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
@@ -31,11 +32,25 @@ if __name__ == '__main__':
     print('The number of training images = %d' % dataset_size)
 
     model = create_model(opt)      # create a model given opt.model and other options
-    model.setup(opt)               # regular setup: load and print networks; create schedulers
+    aux = model.setup(opt)               # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = opt.load_iter                # the total number of training iterations
+    start_epoch = opt.epoch_count
+    if aux is not None:
+        total_iters = aux['iteration']
+        start_epoch = aux['epoch']
+        model.set_optimizer_states(aux['optimizers'])
+        model.set_scheduler_states(aux['schedulers'])
+    if opt.dataset_mode == 'synthetic':
+        if aux is not None:
+            for i,prob in enumerate(aux['font_prob']):
+                dataset.dataset.textGen[i].fontProbs=prob
+            score_fake_EMA = aux['score_fake_EMA']
+        else:
+            score_fake_EMA = []
+        alpha=0.01
 
-    for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
+    for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()    # timer for data loading per iteration
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
@@ -50,6 +65,20 @@ if __name__ == '__main__':
             epoch_iter += 1#opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
+
+            if opt.dataset_mode == 'synthetic':
+                if total_iters>50:
+                    #update exponential moving average
+                    if model.score_fake>score_fake_EMA:
+                        dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],1)
+                    else:
+                        dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],-1)
+                    score_fake_EMA = alpha*model.score_fake+(1-alpha)*score_fake_EMA
+                elif total_iters>30:
+                    score_fake_EMA.append(model.score_fake)
+                    if total_iters==50:
+                        score_fake_EMA = np.mean(score_fake_EMA) #get initial average
+
 
             if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
                 save_result = total_iters % opt.update_html_freq == 0
@@ -66,7 +95,15 @@ if __name__ == '__main__':
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
                 save_suffix = 'iter_%d' % total_iters if opt.save_by_iter and (total_iters%opt.save_by_iter_at==0) else 'latest'
-                model.save_networks(save_suffix)
+                aux={   'iteration':total_iters,
+                        'epoch': epoch,
+                        'optimizers': model.get_optimizer_states(),
+                        'schedulers': model.get_scheduler_states(),
+                    }
+                if opt.dataset_mode == 'synthetic':
+                    aux['font_prob'] = [s.fontProbs for s in dataset.dataset.textGen]
+                    aus['score_fake_EMA'] = score_fake_EMA
+                model.save_networks(save_suffix,aux)
 
             iter_data_time = time.time()
         if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs

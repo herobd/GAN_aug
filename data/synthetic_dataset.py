@@ -1,12 +1,12 @@
 import os.path
 from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
-from data.sythetic_text import SyntheticText, apply_tensmeyer_brightness
+from synthetic_text_gen import SyntheticText, apply_tensmeyer_brightness, grid_distortion
 #from PIL import Image
 import cv2, json
-import random
+import numpy as np
 import torch
-from util import grid_distortion
+#from util import grid_distortion
 
 
 class SyntheticDataset(BaseDataset):
@@ -103,8 +103,9 @@ class SyntheticDataset(BaseDataset):
             return self[(index+100)%len(self)]
         if self.augment:
             A_img = apply_tensmeyer_brightness(A_img,20)
-        gen = random.choice(self.textGen)
-        B_img,text = gen.getSample()
+        g_index = np.random.choice(len(self.textGen))
+        gen = self.textGen[g_index]
+        B_img,text,f_index = gen.getSample()
         if B_img.shape[1]/B_img.shape[0]<0.85:
             return self[(index+100)%len(self)]
         # apply image transformation
@@ -123,7 +124,7 @@ class SyntheticDataset(BaseDataset):
         A_img = 1-(A_img/128.0)
         B_img = 2.0*B_img-1.0
         if self.augment:
-            if random.random() < self.use_warp:
+            if np.random.random() < self.use_warp:
                 A_img = grid_distortion.warp_image(A_img) #use default params of start-follow-read
 
         if self.max_total_width>0 and A_img.shape[1]+B_img.shape[1]>self.max_total_width:
@@ -132,7 +133,7 @@ class SyntheticDataset(BaseDataset):
             #    startX = random.randint(0,excess)
             #    A_img = A_img[:,startX:startX+self.max_width]
             #elif
-            startX = random.randint(0,excess)
+            startX = np.random.randint(0,excess)
             if A_img.shape[1]>B_img.shape[1]:
                 A_img = A_img[:,startX:startX+A_img.shape[1]-excess]
             else:
@@ -143,7 +144,7 @@ class SyntheticDataset(BaseDataset):
         assert(A.size(2)>0 and B.size(2)>0)
         #print('A:{}, B:{}'.format(A.size(),B.size()))
 
-        return {'A': A, 'B': B, 'A_paths': A_path, 'B_paths': 'synthetic', 'B_text':text}
+        return {'A': A, 'B': B, 'A_paths': A_path, 'B_paths': 'synthetic', 'B_text':text, 'B_gen':g_index, 'B_font':f_index}
 
     def __len__(self):
         """Return the total number of images in the dataset.

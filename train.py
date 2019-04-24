@@ -93,7 +93,7 @@ if __name__ == '__main__':
                     agree_score_diff.append(B_diff<B_diff_EMA == model.score_fake>score_fake_EMA)
                     #if B_diff<B_diff_EMA:
                     if model.score_fake>score_fake_EMA:
-                        dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],1)
+                        dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],opt.weight_font_step)
                     #else:
                     #    dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],-2)
                     B_diff_EMA = alpha*B_diff+(1-alpha)*B_diff_EMA

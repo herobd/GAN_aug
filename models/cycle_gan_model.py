@@ -157,13 +157,13 @@ class CycleGANModel(BaseModel):
         """Calculate GAN loss for discriminator D_A"""
         fake_B = self.fake_B_pool.query(self.fake_B)
         self.loss_D_A, real_score,fake_score = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
-        self.score_A=real_score
+        #self.score_A=real_score
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         fake_A = self.fake_A_pool.query(self.fake_A)
         self.loss_D_B, real_score,fake_score = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
-        self.score_B=real_score
+        #self.score_B=real_score
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -203,7 +203,7 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         score = self.netD_B(self.fake_A)
         self.loss_G_B = self.criterionGAN(score, True)
-        self.score_fake=score.mean().item()
+        #self.score_fake=score.mean().item()
         # Forward cycle loss || G_B(G_A(A)) - A||
         if self.rec_A.size(3)>self.real_A.size(3):
             diff = self.rec_A.size(3)-self.real_A.size(3)

@@ -25,6 +25,21 @@ from models import create_model
 from util.visualizer import Visualizer
 import numpy as np
 
+def diff_images(imA,imB):
+    if imA.shape[3]<imB.shape[3]:
+        imT=imA
+        imA=imB
+        imB=imT
+    diff_w = imA.shape[3]-imB.shape[3]
+    offF = diff_w//2
+    offB = diff_w//2 + diff_w%2
+    if offB>0:
+        imA = imA[...,offF:-offB]
+    else:
+        imA = imA[...,offF:]
+    diff = (imA-imB).abs().mean().item()
+    return diff
+
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
@@ -45,10 +60,11 @@ if __name__ == '__main__':
         if aux is not None:
             for i,prob in enumerate(aux['font_prob']):
                 dataset.dataset.textGen[i].fontProbs=prob
-            score_fake_EMA = aux['score_fake_EMA']
+            B_diff_EMA = aux['B_diff_EMA']
         else:
-            score_fake_EMA = []
+            B_diff_EMA = []
         alpha=0.01
+
 
     for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -67,17 +83,20 @@ if __name__ == '__main__':
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
             if opt.dataset_mode == 'synthetic':
-                if total_iters>50:
+                if total_iters>230:
                     #update exponential moving average
-                    if model.score_fake>score_fake_EMA:
+                    import pdb;pdb.set_trace()
+                    B_diff = diff_images(model.fake_A,model.real_B)
+                    if B_diff<B_diff_EMA:
                         dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],1)
-                    else:
-                        dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],-1)
-                    score_fake_EMA = alpha*model.score_fake+(1-alpha)*score_fake_EMA
-                elif total_iters>30:
-                    score_fake_EMA.append(model.score_fake)
-                    if total_iters==50:
-                        score_fake_EMA = np.mean(score_fake_EMA) #get initial average
+                    #else:
+                    #    dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],-2)
+                    B_diff_EMA = alpha*B_diff+(1-alpha)*B_diff_EMA
+                elif total_iters>200:
+                    B_diff = diff_images(model.fake_A,model.real_B)
+                    B_diff_EMA.append(B_diff)
+                    if total_iters==230:
+                        B_diff_EMA = np.mean(B_diff_EMA) #get initial average
 
 
             if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
@@ -102,7 +121,7 @@ if __name__ == '__main__':
                     }
                 if opt.dataset_mode == 'synthetic':
                     aux['font_prob'] = [s.fontProbs for s in dataset.dataset.textGen]
-                    aus['score_fake_EMA'] = score_fake_EMA
+                    aux['B_diff_EMA'] = B_diff_EMA
                 model.save_networks(save_suffix,aux)
 
             iter_data_time = time.time()

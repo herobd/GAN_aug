@@ -41,7 +41,7 @@ if __name__ == '__main__':
         start_epoch = aux['epoch']
         model.set_optimizer_states(aux['optimizers'])
         model.set_scheduler_states(aux['schedulers'])
-    if opt.dataset_mode == 'synthetic':
+    if opt.dataset_mode == 'synthetic' and not opt.no_weight_fonts:
         if aux is not None:
             for i,prob in enumerate(aux['font_prob']):
                 dataset.dataset.textGen[i].fontProbs=prob
@@ -66,7 +66,7 @@ if __name__ == '__main__':
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
-            if opt.dataset_mode == 'synthetic':
+            if opt.dataset_mode == 'synthetic' and not opt.no_weight_fonts:
                 if total_iters>50:
                     #update exponential moving average
                     if model.score_fake>score_fake_EMA:
@@ -100,9 +100,9 @@ if __name__ == '__main__':
                         'optimizers': model.get_optimizer_states(),
                         'schedulers': model.get_scheduler_states(),
                     }
-                if opt.dataset_mode == 'synthetic':
+                if opt.dataset_mode == 'synthetic' and not opt.no_weight_fonts:
                     aux['font_prob'] = [s.fontProbs for s in dataset.dataset.textGen]
-                    aus['score_fake_EMA'] = score_fake_EMA
+                    aux['score_fake_EMA'] = score_fake_EMA
                 model.save_networks(save_suffix,aux)
 
             iter_data_time = time.time()

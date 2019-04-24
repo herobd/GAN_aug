@@ -27,6 +27,7 @@ class SyntheticDataset(BaseDataset):
         parser.add_argument('--scale_height', type=int, default=32, help='scale images to this height')
         parser.add_argument('--max_total_width', type=int, default=-1, help='random crop images if their summed width exceed this')
         parser.add_argument('--text_only', type=bool, default=False, help='only use text images')
+        parser.add_argument('--no_weight_fonts', type=bool, default=False, help='dont weight the font probabilities')
         return parser
 
 

@@ -203,7 +203,7 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         score = self.netD_B(self.fake_A)
         self.loss_G_B = self.criterionGAN(score, True)
-        #self.score_fake=score.mean().item()
+        self.score_fake=score.mean().item()
         # Forward cycle loss || G_B(G_A(A)) - A||
         if self.rec_A.size(3)>self.real_A.size(3):
             diff = self.rec_A.size(3)-self.real_A.size(3)

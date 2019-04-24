@@ -61,8 +61,12 @@ if __name__ == '__main__':
             for i,prob in enumerate(aux['font_prob']):
                 dataset.dataset.textGen[i].fontProbs=prob
             B_diff_EMA = aux['B_diff_EMA']
+            score_fake_EMA = aux['score_fake_EMA']
+            agree_score_diff = aux['agree_score_diff']
         else:
             B_diff_EMA = []
+            score_fake_EMA = []
+            agree_score_diff = []
         alpha=0.01
 
 
@@ -85,18 +89,22 @@ if __name__ == '__main__':
             if opt.dataset_mode == 'synthetic' and not opt.no_weight_fonts:
                 if total_iters>230:
                     #update exponential moving average
-                    import pdb;pdb.set_trace()
                     B_diff = diff_images(model.fake_A,model.real_B)
-                    if B_diff<B_diff_EMA:
+                    agree_score_diff.append(B_diff<B_diff_EMA == model.score_fake>score_fake_EMA)
+                    #if B_diff<B_diff_EMA:
+                    if model.score_fake>score_fake_EMA:
                         dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],1)
                     #else:
                     #    dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],-2)
                     B_diff_EMA = alpha*B_diff+(1-alpha)*B_diff_EMA
+                    score_fake_EMA = alpha*model.score_fake+(1-alpha)*score_fake_EMA
                 elif total_iters>200:
                     B_diff = diff_images(model.fake_A,model.real_B)
                     B_diff_EMA.append(B_diff)
+                    score_fake_EMA.append(model.score_fake)
                     if total_iters==230:
                         B_diff_EMA = np.mean(B_diff_EMA) #get initial average
+                        score_fake_EMA = np.mean(score_fake_EMA) #get initial average
 
 
             if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
@@ -123,6 +131,7 @@ if __name__ == '__main__':
                     aux['font_prob'] = [s.fontProbs for s in dataset.dataset.textGen]
                     aux['score_fake_EMA'] = score_fake_EMA
                     aux['B_diff_EMA'] = B_diff_EMA
+                    aux['agree_score_diff'] = agree_score_diff
                 model.save_networks(save_suffix,aux)
 
             iter_data_time = time.time()

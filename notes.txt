@@ -11,3 +11,7 @@ python train.py --dataroot ../data/bentham/line_images/ --name syn_bentham60W_cy
 
 
 python test.py --dataroot ../data/bentham/line_images/ --name syn_bentham60W_cyclegan --model cycle_gan --dataset_mode synthetic --scale_height 60 --netG resnet_6blocks  --syn_file synth_hw.json --num_threads 5 --results_dir results/syn_bentham60W_cyclegan --num_test 200 --eval --phase train 
+
+python train.py --dataroot ../data/bentham/line_images/ --name syn_bentham60WDis_cyclegan --model cycle_gan --dataset_mode synthetic --scale_height 60 --max_total_width 1600 --netG resnet_6blocks --display_id 0 --update_html_freq 200 --save_latest_freq 500  --save_by_iter --save_by_iter_at 20000 --lambda_identity 0.1 --syn_file synth_hw.json --num_threads 5 --display_freq 100 --save_epoch_freq 1000
+
+python train.py --dataroot ../data/bentham/line_images/ --name syn_bentham60W.5Dis_cyclegan --model cycle_gan --dataset_mode synthetic --scale_height 60 --max_total_width 1600 --netG resnet_6blocks --display_id 0 --update_html_freq 200 --save_latest_freq 500  --save_by_iter --save_by_iter_at 20000 --lambda_identity 0.1 --syn_file synth_hw.json --num_threads 5 --display_freq 100 --save_epoch_freq 1000 --weight_font_step 0.5

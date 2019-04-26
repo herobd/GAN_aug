@@ -85,7 +85,6 @@ if __name__ == '__main__':
             if opt.dataset_mode == 'synthetic':
                 if total_iters>230:
                     #update exponential moving average
-                    import pdb;pdb.set_trace()
                     B_diff = diff_images(model.fake_A,model.real_B)
                     if B_diff<B_diff_EMA:
                         dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],1)

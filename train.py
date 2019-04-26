@@ -92,7 +92,8 @@ if __name__ == '__main__':
                     B_diff = diff_images(model.fake_A,model.real_B)
                     agree_score_diff.append(B_diff<B_diff_EMA == model.score_fake>score_fake_EMA)
                     #if B_diff<B_diff_EMA:
-                    if model.score_fake>score_fake_EMA:
+                    if ( (model.score_fake>score_fake_EMA and not opt.weight_fonts_with_id) or
+                            (B_diff<B_diff_EMA and opt.weight_fonts_with_id) ):
                         dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],opt.weight_font_step)
                     #else:
                     #    dataset.dataset.textGen[data['B_gen']].changeFontProb(data['B_font'],-2)
